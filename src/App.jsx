@@ -25,7 +25,6 @@ function App() {
     fetchTasks();
   }, []);
 
-
   const fetchTasks = async () => {
     const Task = Parse.Object.extend("Task");
     const query = new Parse.Query(Task);
@@ -36,53 +35,54 @@ function App() {
       description: task.get("description"),
       priority: Object.keys(priorityLevels).find(key => priorityLevels[key] === task.get("priority")),
     })));
-  };
+  };  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!task) return;
-    console.log(task);
-    console.log("editIde", editingId);
-
+  
     if (editingId) {
       await updateTask(editingId, task, priorityLevels[priority]);
     } else {
       await createTask(task, priorityLevels[priority]);
     }
+    
     setTask("");
     setPriority("Baixa");
     setEditingId(null);
-    fetchTasks();
   };
+  
 
-  const createTask = (description, priority) => {
+  const createTask = async (description, priority) => {
     const Task = Parse.Object.extend("Task");
     const newTask = new Task();
-
+  
     newTask.set("description", description);
     newTask.set("priority", priority);
-
-    newTask.save()
-      .then((task) => {
-        console.log('Tarefa criada com sucesso! Descrição: ' + task.get("description") + ', Prioridade: ' + task.get("priority"));
-      })
-      .catch((error) => {
-        console.log('Erro ao criar a tarefa: ' + error.message);
-      });
+  
+    try {
+      await newTask.save();
+      console.log('Tarefa criada com sucesso!');
+      fetchTasks();
+    } catch (error) {
+      console.log('Erro ao criar a tarefa: ' + error.message);
+    }
   };
-
-
-
 
   const updateTask = async (id, description, priority) => {
     const Task = Parse.Object.extend("Task");
     const query = new Parse.Query(Task);
-    const task = await query.get(id);
-    task.set("description", description);
-    task.set("priority", priority);
-    await task.save();
+    try {
+      const task = await query.get(id);
+      task.set("description", description);
+      task.set("priority", priority);
+      await task.save();
+      fetchTasks();
+    } catch (error) {
+      console.error("Erro ao atualizar a tarefa:", error);
+    }
   };
-
+  
   const deleteTask = async (id) => {
     const Task = Parse.Object.extend("Task");
     const query = new Parse.Query(Task);
@@ -118,8 +118,10 @@ function App() {
         {tasks.map((t) => (
           <li key={t.id}>
             {t.description} (Prioridade: {t.priority})
-            <button className="edit-button" onClick={() => handleEdit(t)}>Editar</button>
-            <button className="delete-button" onClick={() => deleteTask(t.id)}>Deletar</button>
+            <div className="buttons">
+              <button className="edit-button" onClick={() => handleEdit(t)}>Editar</button>
+              <button className="delete-button" onClick={() => deleteTask(t.id)}>Deletar</button>
+            </div>
           </li>
         ))}
       </ul>

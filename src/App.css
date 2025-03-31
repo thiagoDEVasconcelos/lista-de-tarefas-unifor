@@ -96,6 +96,11 @@ button {
   font-size: 1rem;
 }
 
+.buttons {
+  display: flex;
+  gap: 10px;
+}
+
 button:hover {
   background-color: #45a049;
 }
@@ -114,7 +119,6 @@ li {
 }
 
 li button {
-  margin-left: 10px;
   background-color: #1647cf;
 }
 
@@ -123,7 +127,6 @@ li button:hover {
 }
 
 .delete-button {
-  margin-left: 10px;
   background-color: #d32f2f;
   border: solid white 1px;
 }
@@ -136,4 +139,8 @@ li button:hover {
   margin-left: 10px;
   background-color: #1647cf;
   border: solid white 1px;
+}
+
+.edit-button:hover {
+  background-color: #0e2870;
 }
