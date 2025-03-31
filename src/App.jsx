@@ -1,6 +1,7 @@
+import "./App.css";
 import { useState, useEffect } from "react";
 import Parse from "parse";
-import "./App.css";
+import { Bounce, toast, ToastContainer } from "react-toastify";
 
 const priorityLevels = {
   "Baixa": 1,
@@ -28,7 +29,7 @@ function App() {
   const fetchTasks = async () => {
     const Task = Parse.Object.extend("Task");
     const query = new Parse.Query(Task);
-    query.ascending("priority");
+    query.descending("priority");
     const results = await query.find();
     setTasks(results.map((task) => ({
       id: task.id,
@@ -62,33 +63,53 @@ function App() {
   
     try {
       await newTask.save();
-      console.log('Tarefa criada com sucesso!');
+
+      toast.success('Tarefa criada com sucesso!')
+
       fetchTasks();
     } catch (error) {
-      console.log('Erro ao criar a tarefa: ' + error.message);
+
+      toast.error(`Erro ao criar a tarefa: ${error.message}`)
     }
   };
 
   const updateTask = async (id, description, priority) => {
     const Task = Parse.Object.extend("Task");
     const query = new Parse.Query(Task);
+
     try {
       const task = await query.get(id);
+      
       task.set("description", description);
       task.set("priority", priority);
+      
       await task.save();
+
+      toast.success('Tarefa atualizada com sucesso!')
+
       fetchTasks();
     } catch (error) {
-      console.error("Erro ao atualizar a tarefa:", error);
+
+      toast.error(`Erro ao atualizar a tarefa: ${error.message}`)
     }
   };
   
   const deleteTask = async (id) => {
-    const Task = Parse.Object.extend("Task");
-    const query = new Parse.Query(Task);
-    const task = await query.get(id);
-    await task.destroy();
-    fetchTasks();
+
+    try {
+      const Task = Parse.Object.extend("Task");
+      const query = new Parse.Query(Task);
+      const task = await query.get(id);
+    
+      await task.destroy();
+
+      toast.success('Tarefa excluída com sucesso!')
+
+      fetchTasks();
+    } catch (error) {
+
+      toast.error(`Erro ao excluir a tarefa: ${error.message}`)
+    }
   };
 
   const handleEdit = (task) => {
@@ -97,9 +118,16 @@ function App() {
     setEditingId(task.id);
   };
 
+  const handleCancelEdit = () => {
+    setTask('');
+    setPriority('Baixa');
+    setEditingId(null);
+  };
+
   return (
     <div className="App">
       <h1>Lista de Tarefas</h1>
+      
       <form onSubmit={handleSubmit}>
         <input
           type="text"
@@ -107,24 +135,46 @@ function App() {
           onChange={(e) => setTask(e.target.value)}
           placeholder="Nova tarefa"
         />
+        
         <select value={priority} onChange={(e) => setPriority(e.target.value)}>
           {Object.keys(priorityLevels).map((key) => (
             <option key={key} value={key}>{key}</option>
           ))}
         </select>
+        
         <button type="submit">{editingId ? "Atualizar" : "Adicionar"}</button>
+
+        {editingId && <button className="update-cancel-button" onClick={handleCancelEdit}>Cancelar edição</button>}
       </form>
+      
       <ul>
-        {tasks.map((t) => (
-          <li key={t.id}>
-            {t.description} (Prioridade: {t.priority})
+        {tasks.map(task => (
+          <li key={task.id}>
+            {task.description} (Prioridade: {task.priority})
+
             <div className="buttons">
-              <button className="edit-button" onClick={() => handleEdit(t)}>Editar</button>
-              <button className="delete-button" onClick={() => deleteTask(t.id)}>Deletar</button>
+              <button className="edit-button" onClick={() => handleEdit(task)}>Editar</button>
+              
+              <button className="delete-button" onClick={() => deleteTask(task.id)}>Deletar</button>
             </div>
           </li>
         ))}
       </ul>
+
+      <ToastContainer
+        limit={5}
+        position="bottom-center"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick={false}
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+        transition={Bounce}
+      />
     </div>
   );
 }
